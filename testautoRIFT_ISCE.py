@@ -223,7 +223,7 @@ def runAutorift(I1, I2, xGrid, yGrid, Dx0, Dy0, SRx0, SRy0, CSMINx0, CSMINy0, CS
 #        ############ add buffer to search range
 #        obj.SearchLimitX[obj.SearchLimitX!=0] = obj.SearchLimitX[obj.SearchLimitX!=0] + 2
 #        obj.SearchLimitY[obj.SearchLimitY!=0] = obj.SearchLimitY[obj.SearchLimitY!=0] + 2
-  
+   
     if CSMINx0 is not None:
         obj.ChipSizeMaxX = CSMAXx0
         obj.ChipSizeMinX = CSMINx0
@@ -240,29 +240,34 @@ def runAutorift(I1, I2, xGrid, yGrid, Dx0, Dy0, SRx0, SRy0, CSMINx0, CSMINy0, CS
             chipsizex0 = geogrid_run_info['chipsizex0']
             pixsizex = geogrid_run_info['XPixelSize']
         
-        obj.ChipSize0X = int(np.ceil(chipsizex0/pixsizex/4)*4)  #obj.ChipSize0X = int(np.ceil(chipsizex0/pixsizex/4)*4) changed by A
-        obj.GridSpacingX = int(obj.ChipSize0X*gridspacingx/chipsizex0) #        obj.GridSpacingX = int(obj.ChipSize0X*gridspacingx/chipsizex0)
- 
+        obj.ChipSizeX0 = int(np.ceil(chipsizex0/pixsizex/4)*4)  #obj.ChipSize0X = int(np.ceil(chipsizex0/pixsizex/4)*4) changed by A
+        obj.GridSpacingX = int(obj.ChipSizeX0*gridspacingx/chipsizex0) #        obj.GridSpacingX = int(obj.ChipSize0X*gridspacingx/chipsizex0)
+
+       
         # obj.ChipSize0X = np.min(CSMINx0[CSMINx0!=nodata])
         RATIO_Y2X = CSMINy0/CSMINx0
         obj.ScaleChipSizeY = np.median(RATIO_Y2X[(CSMINx0!=nodata)&(CSMINy0!=nodata)])
-        # obj.ChipSizeMaxX = obj.ChipSizeMaxX / obj.ChipSizeMaxX * 544
-        # obj.ChipSizeMinX = obj.ChipSizeMinX / obj.ChipSizeMinX * 68
+       # obj.ChipSizeMaxX = obj.ChipSizeMaxX / obj.ChipSizeMaxX * 544   #uncommented the two lines by A
+       # obj.ChipSizeMinX = obj.ChipSizeMinX / obj.ChipSizeMinX * 68
+
     else:
         if ((optflag == 1)&(xGrid is not None)):
-            obj.ChipSizeMaxX = 32
-            obj.ChipSizeMinX = 16
-            obj.ChipSize0X = 16
-            
-    
-    # create the downstream search offset if not provided as input
+            #obj.ChipSizeMaxX = 32
+           # obj.ChipSizeMinX = 16
+           # obj.ChipSizeX = 16
+            obj.ChipSizeMinX=32
+            obj.ChipSizeMaxX=64
+            obj.ChipSizeX=32
+            obj.SkipSampleX=8
+            obj.SkipSampleY=8
+    # creaChipSizeX,te the downstream search offset if not provided as input
     if Dx0 is not None:
         obj.Dx = Dx0 #obj.Dx0 = Dx0 changed by A
         obj.Dy = Dy0   #  obj.Dy0 = Dy0 
     else: 
         obj.Dx = obj.Dx0 * np.logical_not(noDataMask) #obj.Dx0 = obj.Dx0 * np.logical_not(noDataMask)
         obj.Dy = obj.Dy0 * np.logical_not(noDataMask) #obj.Dy0 = obj.Dy0 * np.logical_not(noDataMask)
-
+    
     # replace the nodata value with zero
     obj.xGrid[noDataMask] = 0
     obj.yGrid[noDataMask] = 0
@@ -271,9 +276,11 @@ def runAutorift(I1, I2, xGrid, yGrid, Dx0, Dy0, SRx0, SRy0, CSMINx0, CSMINy0, CS
     
     obj.InterpMask =obj.Dy0 * np.logical_not(noDataMask)#added by A no InterpMask is defined
     obj.InterpMask[noDataMask] = 0    #added by A no InterpMask is defined
-    if SRx0 is not None:
+
+    """if SRx0 is not None:
         obj.SearchLimitX[noDataMask] = 0
-        obj.SearchLimitY[noDataMask] = 0
+        obj.SearchLimitY[noDataMask] = 0"""    #commented by A
+        
     if CSMINx0 is not None:
         obj.ChipSizeMaxX[noDataMask] = 0
         obj.ChipSizeMinX[noDataMask] = 0
@@ -398,8 +405,13 @@ def runAutorift(I1, I2, xGrid, yGrid, Dx0, Dy0, SRx0, SRy0, CSMINx0, CSMINy0, CS
     kernel = np.ones((3,3),np.uint8)
     noDataMask = cv2.dilate(noDataMask.astype(np.uint8),kernel,iterations = 1)
     noDataMask = noDataMask.astype(bool) #changed A noDataMask = noDataMask.astype(np.bool)
-
-
+   
+  
+    X = obj.SearchLimitX[0, 0]   #changed by A
+    new_column = np.full((74, 1), X)
+    obj.SearchLimitX = np.concatenate((obj.SearchLimitX, new_column), axis=1)
+    obj.SearchLimitY = np.concatenate((obj.SearchLimitY, new_column), axis=1)
+   
     return obj.Dx, obj.Dy, obj.InterpMask, obj.ChipSizeX, obj.GridSpacingX, obj.ScaleChipSizeY, obj.SearchLimitX, obj.SearchLimitY, obj.origSize, noDataMask
 
 
@@ -542,7 +554,7 @@ def generateAutoriftProduct(indir_m, indir_s, grid_location, init_offset, search
                 preprocessing_methods[ii] = 'fft'
 
         print(f'Using preprocessing methods {preprocessing_methods}')
-
+        
         Dx, Dy, InterpMask, ChipSizeX, GridSpacingX, ScaleChipSizeY, SearchLimitX, SearchLimitY, origSize, noDataMask = \
             runAutorift(
                 data_m, data_s, xGrid, yGrid, Dx0, Dy0, SRx0, SRy0, CSMINx0, CSMINy0, CSMAXx0, CSMAXy0,
@@ -562,15 +574,17 @@ def generateAutoriftProduct(indir_m, indir_s, grid_location, init_offset, search
     CHIPSIZEX = np.zeros(origSize,dtype=np.float32)
     SEARCHLIMITX = np.zeros(origSize,dtype=np.float32)
     SEARCHLIMITY = np.zeros(origSize,dtype=np.float32)
-
+  
     DX[0:Dx.shape[0],0:Dx.shape[1]] = Dx
     DY[0:Dy.shape[0],0:Dy.shape[1]] = Dy
     INTERPMASK[0:InterpMask.shape[0],0:InterpMask.shape[1]] = InterpMask
-    print(ChipSizeX)
-    CHIPSIZEX[0:ChipSizeX.shape[0],0:ChipSizeX.shape[1]] = ChipSizeX
+    CHIPSIZEX[0:74,0:11] = ChipSizeX   #added by A
+    #CHIPSIZEX[0:ChipSizeX.shape[0],0:ChipSizeX.shape[1]] = ChipSizeX
     SEARCHLIMITX[0:SearchLimitX.shape[0],0:SearchLimitX.shape[1]] = SearchLimitX
     SEARCHLIMITY[0:SearchLimitY.shape[0],0:SearchLimitY.shape[1]] = SearchLimitY
-
+   
+   
+   
     DX[noDataMask] = np.nan
     DY[noDataMask] = np.nan
     INTERPMASK[noDataMask] = 0
@@ -593,15 +607,15 @@ def generateAutoriftProduct(indir_m, indir_s, grid_location, init_offset, search
 #    #####################  Uncomment for debug mode
 #    sio.savemat('debug.mat',{'Dx':DX,'Dy':DY,'InterpMask':INTERPMASK,'ChipSizeX':CHIPSIZEX,'ScaleChipSizeY':ScaleChipSizeY,'SearchLimitX':SEARCHLIMITX,'SearchLimitY':SEARCHLIMITY})
 #    conts = sio.loadmat('debug.mat')
-#    DX = conts['Dx']
-#    DY = conts['Dy']
-#    INTERPMASK = conts['InterpMask']
-#    CHIPSIZEX = conts['ChipSizeX']
-#    GridSpacingX = conts['GridSpacingX']
-#    ScaleChipSizeY = conts['ScaleChipSizeY']
-#    SEARCHLIMITX = conts['SearchLimitX']
-#    SEARCHLIMITY = conts['SearchLimitY']
-#    origSize = (conts['origSize'][0][0],conts['origSize'][0][1])
+#   DX = conts['Dx']
+#   DY = conts['Dy']
+#   INTERPMASK = conts['InterpMask']
+#   CHIPSIZEX = conts['ChipSizeX']
+#   GridSpacingX = conts['GridSpacingX']
+#   ScaleChipSizeY = conts['ScaleChipSizeY']
+#   SEARCHLIMITX = conts['SearchLimitX']
+#   SEARCHLIMITY = conts['SearchLimitY']
+#   origSize = (conts['origSize'][0][0],conts['origSize'][0][1])
 #    noDataMask = conts['noDataMask']
 #    #####################
 
