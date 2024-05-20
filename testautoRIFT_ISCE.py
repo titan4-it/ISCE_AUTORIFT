@@ -407,10 +407,7 @@ def runAutorift(I1, I2, xGrid, yGrid, Dx0, Dy0, SRx0, SRy0, CSMINx0, CSMINy0, CS
     noDataMask = noDataMask.astype(bool) #changed A noDataMask = noDataMask.astype(np.bool)
    
   
-    X = obj.SearchLimitX[0, 0]   #changed by A
-    new_column = np.full((74, 1), X)
-    obj.SearchLimitX = np.concatenate((obj.SearchLimitX, new_column), axis=1)
-    obj.SearchLimitY = np.concatenate((obj.SearchLimitY, new_column), axis=1)
+ 
    
     return obj.Dx, obj.Dy, obj.InterpMask, obj.ChipSizeX, obj.GridSpacingX, obj.ScaleChipSizeY, obj.SearchLimitX, obj.SearchLimitY, obj.origSize, noDataMask
 
@@ -478,7 +475,7 @@ def generateAutoriftProduct(indir_m, indir_s, grid_location, init_offset, search
         nodata = band.GetNoDataValue()
         xGrid = band.ReadAsArray()
         noDataMask = (xGrid == nodata)
-        band = ds.GetRasterBand(2)
+        band = ds.GetRasterBand(2)  #changed by A  band = ds.GetRasterBand(2)
         yGrid = band.ReadAsArray()
         band=None
         ds=None
@@ -578,8 +575,8 @@ def generateAutoriftProduct(indir_m, indir_s, grid_location, init_offset, search
     DX[0:Dx.shape[0],0:Dx.shape[1]] = Dx
     DY[0:Dy.shape[0],0:Dy.shape[1]] = Dy
     INTERPMASK[0:InterpMask.shape[0],0:InterpMask.shape[1]] = InterpMask
-    CHIPSIZEX[0:74,0:11] = ChipSizeX   #added by A
-    #CHIPSIZEX[0:ChipSizeX.shape[0],0:ChipSizeX.shape[1]] = ChipSizeX
+    #CHIPSIZEX[0:74,0:11] = ChipSizeX   #added by A
+    CHIPSIZEX[0:ChipSizeX.shape[0],0:ChipSizeX.shape[1]] = ChipSizeX
     SEARCHLIMITX[0:SearchLimitX.shape[0],0:SearchLimitX.shape[1]] = SearchLimitX
     SEARCHLIMITY[0:SearchLimitY.shape[0],0:SearchLimitY.shape[1]] = SearchLimitY
    
