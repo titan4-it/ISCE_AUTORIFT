@@ -66,8 +66,8 @@ def stack_geotiff(input1, input2, output):
         dst.write(band2, 2)  # Write the second band
 
 if __name__ == "__main__":
-    input_file_1 = 'LC08_L2SP_07.TIF'
-    input_file_2 = 'LC08_L2SP_25.TIF'
+    input_file_1 = 'S2A_MSIL2A_20240524T100031_N0510_R122_T33TUG_20240524T155653_resampled-001.tif'
+    input_file_2 = 'S2A_MSIL1C_20240524T100031_N0510_R122_T33TUG_20240524T134121_resampled-002.tif'
     output_file = 'stacked_output.tif'
 
     stack_geotiff(input_file_1, input_file_2, output_file)

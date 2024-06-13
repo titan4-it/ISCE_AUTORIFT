@@ -28,7 +28,7 @@ def separate_bands(input_file, output_prefix):
             print(f"Band {i} written to {output_file}")
 
 if __name__ == "__main__":
-    input_file = 'stacked_output.tif'
+    input_file = 'offset.tif'
     output_prefix = 'separated_output'
 
     separate_bands(input_file, output_prefix)
